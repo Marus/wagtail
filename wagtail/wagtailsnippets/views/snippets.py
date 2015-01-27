@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from wagtail.wagtailadmin.edit_handlers import ObjectList, extract_panel_definitions_from_model_class
+from wagtail.wagtailadmin.edit_handlers import TabbedInterface, ObjectList, extract_panel_definitions_from_model_class
 
 from wagtail.wagtailsnippets.models import get_snippet_content_types
 from wagtail.wagtailsnippets.permissions import user_can_edit_snippet_type
@@ -59,10 +59,26 @@ SNIPPET_EDIT_HANDLERS = {}
 
 def get_snippet_edit_handler(model):
     if model not in SNIPPET_EDIT_HANDLERS:
-        panels = extract_panel_definitions_from_model_class(model)
-        edit_handler = ObjectList(panels)
+        if hasattr(model, 'tabs'):
+            tabs = []
+            for tabdef in model.tabs:
+                panels = None
+                name = None
+                classes = ''
+                if len(tabdef) == 2:
+                    name, panels = tabdef
+                elif len(tabdef) == 3:
+                    name, panels, classes = tabdef
+                else:
+                    continue
+                tabs.append(ObjectList(panels, heading=name, classname=classes))
 
-        SNIPPET_EDIT_HANDLERS[model] = edit_handler
+            SNIPPET_EDIT_HANDLERS[model] = TabbedInterface(tabs)
+        else:
+            panels = extract_panel_definitions_from_model_class(model)
+            edit_handler = ObjectList(panels)
+
+            SNIPPET_EDIT_HANDLERS[model] = edit_handler
 
     return SNIPPET_EDIT_HANDLERS[model]
 
