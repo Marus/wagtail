@@ -694,14 +694,29 @@ PAGE_EDIT_HANDLERS = {}
 
 def get_page_edit_handler(page_class):
     if page_class not in PAGE_EDIT_HANDLERS:
-        PAGE_EDIT_HANDLERS[page_class] = TabbedInterface([
-            ObjectList(page_class.content_panels, heading='Content'),
-            ObjectList(page_class.promote_panels, heading='Promote'),
-            ObjectList(page_class.settings_panels, heading='Settings', classname="settings")
-        ])
+        if hasattr(page_class, 'tabs'):
+            tabs = []
+            for tabdef in page_class.tabs:
+                panels = None
+                name = None
+                classes = ''
+                if len(tabdef) == 2:
+                    name, panels = tabdef
+                elif len(tabdef) == 3:
+                    name, panels, classes = tabdef
+                else:
+                    continue
+                tabs.append(ObjectList(panels, heading=name, classname=classes))
+
+            PAGE_EDIT_HANDLERS[page_class] = TabbedInterface(tabs)
+        else:
+            PAGE_EDIT_HANDLERS[page_class] = TabbedInterface([
+                ObjectList(page_class.content_panels, heading='Content'),
+                ObjectList(page_class.promote_panels, heading='Promote'),
+                ObjectList(page_class.settings_panels, heading='Settings', classname="settings")
+            ])
 
     return PAGE_EDIT_HANDLERS[page_class]
-
 
 @permission_required('wagtailadmin.access_admin')
 @vary_on_headers('X-Requested-With')
