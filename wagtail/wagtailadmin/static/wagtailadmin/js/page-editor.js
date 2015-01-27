@@ -115,6 +115,12 @@ function initDateTimeChooser(id) {
     }
 }
 
+function initFileInput(id) {
+    var field = $('#' + id);
+    var form = field.parents('form');
+    form.attr('enctype', 'multipart/form-data');
+}
+
 function initTagField(id, autocompleteUrl) {
     $('#' + id).tagit({
         autocomplete: {source: autocompleteUrl}

@@ -26,6 +26,9 @@ class AdminDateTimeInput(WidgetWithScript, widgets.DateTimeInput):
     def render_js_init(self, id_, name, value):
         return 'initDateTimeChooser({0});'.format(json.dumps(id_))
 
+class AdminClearableFileInput(WidgetWithScript, widgets.ClearableFileInput):
+    def render_js_init(self, id_, name, value):
+        return 'initFileInput({0});'.format(json.dumps(id_))
 
 class AdminTagWidget(WidgetWithScript, TagWidget):
     def render_js_init(self, id_, name, value):

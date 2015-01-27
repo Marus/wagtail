@@ -27,6 +27,7 @@ FORM_FIELD_OVERRIDES = {
     models.DateField: {'widget': widgets.AdminDateInput},
     models.TimeField: {'widget': widgets.AdminTimeInput},
     models.DateTimeField: {'widget': widgets.AdminDateTimeInput},
+    models.FileField: {'widget': widgets.AdminClearableFileInput},
     TaggableManager: {'widget': widgets.AdminTagWidget}
 }
 
