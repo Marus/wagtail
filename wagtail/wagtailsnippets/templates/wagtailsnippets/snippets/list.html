@@ -1,23 +1,47 @@
 {% load i18n %}
+{% load wagtailsnippets_tags %}
+
 <table class="listing">
     <col />
     <col  />
     <col width="16%" />
     <thead>
         <tr class="table-headers">
-            <th>{% trans "Title" %}</th>
+            {% if content_type.model_class.list_fields %}
+                {% for field in content_type.model_class.list_fields %}
+                    <th>{{ content_type.model_class|field_verbose_name:field }}</th>
+                {% endfor %}
+            {% else %}
+                <th>{% trans "Title" %}</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
         {% for snippet in items %}
             <tr>
-                <td class="title">
-                    {% if choosing %}
-                        <h2><a class="snippet-choice" href="{% url 'wagtailsnippets_chosen' content_type.app_label content_type.model snippet.id %}">{{ snippet }}</a></h2>
-                    {% else %}
-                        <h2><a href="{% url 'wagtailsnippets_edit' content_type.app_label content_type.model snippet.id %}">{{ snippet }}</a></h2>
-                    {% endif %}
-                </td>
+                {% if content_type.model_class.list_fields %}
+                    {% for field in content_type.model_class.list_fields %}
+                        {% if forloop.counter0 == 0 %}
+                            <td class="title">
+                                {% if choosing %}
+                                    <h2><a class="snippet-choice" href="{% url 'wagtailsnippets_chosen' content_type.app_label content_type.model snippet.id %}">{{ snippet|field_value:field }}</a></h2>
+                                {% else %}
+                                    <h2><a href="{% url 'wagtailsnippets_edit' content_type.app_label content_type.model snippet.id %}">{{ snippet|field_value:field }}</a></h2>
+                                {% endif %}
+                            </td>    
+                        {% else %}
+                            <td>{{ snippet|field_value:field }}</td>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <td class="title">
+                        {% if choosing %}
+                            <h2><a class="snippet-choice" href="{% url 'wagtailsnippets_chosen' content_type.app_label content_type.model snippet.id %}">{{ snippet }}</a></h2>
+                        {% else %}
+                            <h2><a href="{% url 'wagtailsnippets_edit' content_type.app_label content_type.model snippet.id %}">{{ snippet }}</a></h2>
+                        {% endif %}
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
     </tbody>
