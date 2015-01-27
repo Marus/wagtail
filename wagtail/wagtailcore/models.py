@@ -154,6 +154,8 @@ def clear_site_root_paths_on_delete(sender, instance, **kwargs):
 PAGE_MODEL_CLASSES = []
 _PAGE_CONTENT_TYPES = []
 
+def get_root_page_types():
+    return [ContentType.objects.get_for_model(cls) for cls in PAGE_MODEL_CLASSES if cls.allow_as_root]
 
 def get_page_types():
     global _PAGE_CONTENT_TYPES
@@ -311,6 +313,7 @@ class Page(six.with_metaclass(PageBase, MP_Node, ClusterableModel, index.Indexed
         return self.title
 
     is_abstract = True  # don't offer Page in the list of page types a superuser can create
+    allow_as_root = True # Allow pages to be root type by default
 
     def set_url_path(self, parent):
         """
@@ -671,7 +674,7 @@ class Page(six.with_metaclass(PageBase, MP_Node, ClusterableModel, index.Indexed
         # Special case the 'Page' class, such as the Root page or Home page -
         # otherwise you can not add initial pages when setting up a site
         if cls == Page:
-            return get_page_types()
+            return get_root_page_types()
 
         cls_ct = ContentType.objects.get_for_model(cls)
         return [ct for ct in cls.clean_subpage_types()
