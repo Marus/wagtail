@@ -26,7 +26,17 @@ class SnippetsMenuItem(MenuItem):
 
 @hooks.register('register_admin_menu_item')
 def register_snippets_menu_item():
-    return SnippetsMenuItem(_('Snippets'), urlresolvers.reverse('wagtailsnippets_index'), classnames='icon icon-snippet', order=500)
+    menu_items = []
+    i = 0
+
+    for content_type in get_snippet_content_types():
+        verbose_name = content_type.model_class()._meta.verbose_name
+        verbose_name = verbose_name[0:1].upper() + verbose_name[1:]
+        menu_items.append(SnippetsMenuItem(verbose_name, urlresolvers.reverse('wagtailsnippets_list', args=[content_type.app_label, content_type.model]), classnames='icon icon-snippet', order=500 - i))
+        i += 1
+
+    return menu_items
+    # return SnippetsMenuItem(_('Snippets'), urlresolvers.reverse('wagtailsnippets_index'), classnames='icon icon-snippet', order=500)
 
 
 @hooks.register('insert_editor_js')
