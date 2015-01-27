@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group
 from django.conf import settings
+from django.template.loader import select_template
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -246,10 +247,6 @@ class PageBase(models.base.ModelBase):
 
         # Add page manager
         PageManager().contribute_to_class(cls, 'objects')
-
-        if 'template' not in dct:
-            # Define a default template path derived from the app name and model name
-            cls.template = "%s/%s.html" % (cls._meta.app_label, camelcase_to_underscore(name))
 
         if 'ajax_template' not in dct:
             cls.ajax_template = None
@@ -522,10 +519,17 @@ class Page(six.with_metaclass(PageBase, MP_Node, ClusterableModel, index.Indexed
         }
 
     def get_template(self, request, *args, **kwargs):
-        if request.is_ajax():
-            return self.ajax_template or self.template
-        else:
+        if request.is_ajax() and self.ajax_template:
+            return self.ajax_template
+        elif self.template:
             return self.template
+        else:
+            template_list = (
+                "%s/%s-%s.html" % (cls._meta.app_label, camelcase_to_underscore(self._meta.object_name), self.slug),
+                "%s/%s.html" % (cls._meta.app_label, camelcase_to_underscore(self._meta.object_name)),
+                "%s/page.html" % (cls._meta.app_label)
+            )
+            return select_template(template_list)
 
     def serve(self, request, *args, **kwargs):
         return TemplateResponse(
