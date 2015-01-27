@@ -55,7 +55,13 @@ class Menu(object):
     @property
     def registered_menu_items(self):
         if self._registered_menu_items is None:
-            self._registered_menu_items = [fn() for fn in hooks.get_hooks(self.register_hook_name)]
+            self._registered_menu_items = []
+            for fn in hooks.get_hooks(self.register_hook_name):
+                res = fn()
+                if res and isinstance(res, MenuItem):
+                    self._registered_menu_items.append(res)
+                elif res and isinstance(res, list):
+                    self._registered_menu_items += res
         return self._registered_menu_items
 
     def menu_items_for_request(self, request):
