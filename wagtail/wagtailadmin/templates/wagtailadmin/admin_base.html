@@ -5,6 +5,7 @@
     {% compress css %}
         <link rel="stylesheet" href="{{ STATIC_URL }}wagtailadmin/scss/vendor/jquery-ui/jquery-ui-1.10.3.verdant.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}wagtailadmin/scss/core.scss" type="text/x-scss" />
+        {% hook_output 'insert_admin_css' %}
     {% endcompress %}
 
     {% block extra_css %}{% endblock %}
