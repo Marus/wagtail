@@ -7,6 +7,12 @@ SNIPPET_MODELS = []
 
 SNIPPET_CONTENT_TYPES = None
 
+def get_snippet_model(app_label, model):
+    cts = get_snippet_content_types()
+    for ct in cts:
+        if ct.app_label == app_label and ct.model == model:
+            return ct.model_class()
+    return None
 
 def get_snippet_content_types():
     global SNIPPET_CONTENT_TYPES

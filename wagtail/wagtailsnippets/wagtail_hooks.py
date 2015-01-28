@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.conf.urls import include, url
 from django.core import urlresolvers
@@ -32,7 +34,7 @@ def register_snippets_menu_item():
     for content_type in get_snippet_content_types():
         verbose_name = content_type.model_class()._meta.verbose_name
         verbose_name = verbose_name[0:1].upper() + verbose_name[1:]
-        menu_items.append(SnippetsMenuItem(verbose_name, urlresolvers.reverse('wagtailsnippets_list', args=[content_type.app_label, content_type.model]), classnames='icon icon-snippet', order=500 - i))
+        menu_items.append(SnippetsMenuItem(verbose_name, urlresolvers.reverse('wagtailsnippets_list', args=[content_type.app_label, content_type.model]), classnames='icon icon-snippet icon-snippet-' + content_type.model, order=500 - i))
         i += 1
 
     return menu_items
@@ -41,6 +43,16 @@ def register_snippets_menu_item():
 
 @hooks.register('insert_editor_js')
 def editor_js():
+    content_types = []
+    for content_type in get_snippet_content_types():
+        verbose_name = content_type.model_class()._meta.verbose_name
+        verbose_name = verbose_name[0:1].upper() + verbose_name[1:]
+        content_types.append({
+            'app_label': content_type.model_class()._meta.app_label,
+            'model_name': content_type.model_class()._meta.model_name,
+            'label': verbose_name
+        })
+
     return format_html("""
             <script src="{0}{1}"></script>
             <script>window.chooserUrls.snippetChooser = '{2}';</script>
@@ -48,7 +60,16 @@ def editor_js():
         settings.STATIC_URL,
         'wagtailsnippets/js/snippet-chooser.js',
         urlresolvers.reverse('wagtailsnippets_choose_generic')
-    )
+    ) + """
+            <script src="{0}{1}"></script>
+            <script>
+                registerHalloPlugin('hallowagtailsnippets', {{ 'content_types': {2} }});
+            </script>
+        """.format(
+            settings.STATIC_URL,
+            'wagtailsnippets/js/hallo-plugins/hallo-wagtailsnippets.js',
+            json.dumps(content_types)
+        )
 
 
 @hooks.register('register_permissions')

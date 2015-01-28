@@ -12,8 +12,12 @@ from wagtail.wagtaildocs.models import Document
 # HTML for the benefit of the hallo.js editor...
 from wagtail.wagtailimages.models import get_image_model
 from wagtail.wagtailimages.formats import get_image_format
+from wagtail.wagtailsnippets.models import get_snippet_model
 
 from wagtail.wagtailcore import hooks
+
+from wagtail.wagtailcore.utils import camelcase_to_underscore
+from django.template.loader import render_to_string, select_template
 
 
 # Define a set of 'embed handlers' and 'link handlers'. These handle the translation
@@ -96,6 +100,48 @@ class MediaEmbedHandler(object):
             return format.embed_to_frontend_html(attrs['url'])
 
 
+class SnippetEmbedHandler(object):
+    """
+    SnippetEmbedHandler will be invoked whenever we encounter an element in HTML content
+    with and attribute of data-embedtype="snippet". The resulting element in the database
+    representation will be:
+    <embed embedtype="snippet" id="42" snippet-type="snippet1" />
+    """
+    @staticmethod
+    def get_db_attributes(tag):
+        return {
+            'id': tag['data-id'],
+            'snippet-type': tag['data-snippet-type']
+        }
+
+    @staticmethod
+    def expand_db_attributes(attrs, for_editor):
+        """
+        Given a dict of attributes from the <embed> tag, return the real HTML
+        representation.
+        """
+        st = attrs['snippet-type']
+        if st and '.' in st:
+            st = st.split('.')
+            Model = get_snippet_model(st[0], st[1])
+            if Model:
+                try:
+                    snippet = Model.objects.get(id=attrs['id'])
+                    
+                    if for_editor:
+                        return '<div contenteditable="false" data-id="{0}" data-snippet-type="{1}" data-embedtype="snippet">Snippet: {0} ({1})</div>'.format(attrs['id'], attrs['snippet-type'])
+                    else:
+                        template_list = [
+                            "%s/%s.html" % (snippet._meta.app_label, camelcase_to_underscore(snippet._meta.object_name)),
+                            "wagtailcore/snippet.html"
+                        ]
+                        return render_to_string(template_list, { 'snippet': snippet })
+
+                except Model.DoesNotExist:
+                    return '<div class="error-message">Snippet Does Not Exist</div>'
+        return '<div class="error-message">Invalid Snippet</div>'
+
+
 class PageLinkHandler(object):
     """
     PageLinkHandler will be invoked whenever we encounter an <a> element in HTML content
@@ -150,6 +196,7 @@ class DocumentLinkHandler(object):
 EMBED_HANDLERS = {
     'image': ImageEmbedHandler,
     'media': MediaEmbedHandler,
+    'snippet': SnippetEmbedHandler
 }
 LINK_HANDLERS = {
     'page': PageLinkHandler,
